@@ -10,34 +10,36 @@ import FindMarketDirectOfferSoft from "../contracts/FindMarketDirectOfferSoft.cd
 
 
 transaction(tenant: Address, market: String){
-    prepare(account: AuthAccount){
-        let adminRef = account.borrow<&Admin.AdminProxy>(from: Admin.AdminProxyStoragePath) ?? panic("Cannot borrow Admin Reference.")
+	let adminRef : &Admin.AdminProxy
+	prepare(account: AuthAccount){
+		self.adminRef = account.borrow<&Admin.AdminProxy>(from: Admin.AdminProxyStoragePath) ?? panic("Cannot borrow Admin Reference.")
+	}
 
-        var marketType : [Type] = [Type<@FindMarketSale.SaleItem>()]
-        switch market {
-            case "AuctionEscrow" :
-                marketType = [Type<@FindMarketAuctionEscrow.SaleItem>()]
+	execute{
+		var marketType : [Type] = [Type<@FindMarketSale.SaleItem>()]
+		switch market {
+		case "AuctionEscrow" :
+			marketType = [Type<@FindMarketAuctionEscrow.SaleItem>()]
 
-            case "AuctionSoft" :
-                marketType = [Type<@FindMarketAuctionSoft.SaleItem>()]
+		case "AuctionSoft" :
+			marketType = [Type<@FindMarketAuctionSoft.SaleItem>()]
 
-            case "DirectOfferEscrow" :
-                marketType = [Type<@FindMarketDirectOfferEscrow.SaleItem>()]
+		case "DirectOfferEscrow" :
+			marketType = [Type<@FindMarketDirectOfferEscrow.SaleItem>()]
 
-            case "DirectOfferSoft" :
-                marketType = [Type<@FindMarketDirectOfferSoft.SaleItem>()]
+		case "DirectOfferSoft" :
+			marketType = [Type<@FindMarketDirectOfferSoft.SaleItem>()]
 
-        }
+		}
+		let rules=[
+		FindMarket.TenantRule(name:"Flow", types:[Type<@FUSD.Vault>()], ruleType: "ft", allow: true),
+		FindMarket.TenantRule(name:"Dandy", types:[Type<@Dandy.NFT>()], ruleType: "nft", allow: true),
+		FindMarket.TenantRule(name: market, types:marketType, ruleType: "listing", allow: true)
+		]
 
-        let saleItem = FindMarket.TenantSaleItem(name:"FlowDandy".concat(market), cut: nil, rules:[
-            FindMarket.TenantRule(name:"Flow", types:[Type<@FUSD.Vault>()], ruleType: "ft", allow: true),
-            FindMarket.TenantRule(name:"Dandy", types:[Type<@Dandy.NFT>()], ruleType: "nft", allow: true),
-            FindMarket.TenantRule(name: market, types:marketType, ruleType: "listing", allow: true)
-            ], 
-            status: "active"
-        )
+		let saleItem = FindMarket.TenantSaleItem(name:"FlowDandy".concat(market), cut: nil, rules:rules,	status: "active")
 
-        adminRef.setMarketOption(tenant: tenant, saleItem: saleItem)
-    }
+		self.adminRef.setMarketOption(tenant: tenant, saleItem: saleItem)
+	}
 }
 

@@ -9,10 +9,9 @@ transaction(tenant: Address) {
 
     prepare(account: AuthAccount){
         self.adminRef = account.borrow<&Admin.AdminProxy>(from: Admin.AdminProxyStoragePath) ?? panic("Cannot borrow Admin Reference.")
-        
     }
-    execute{
 
+    execute{
         self.adminRef.setNFTInfo(
             alias: "Bl0x", 
             type: Type<@Bl0x.NFT>(), 

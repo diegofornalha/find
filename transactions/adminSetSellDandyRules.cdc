@@ -5,25 +5,27 @@ import FUSD from "../contracts/standard/FUSD.cdc"
 import Dandy from "../contracts/Dandy.cdc"
 
 transaction(tenant: Address) {
-    prepare(account: AuthAccount){
-        let adminRef = account.borrow<&Admin.AdminProxy>(from: Admin.AdminProxyStoragePath) ?? panic("Cannot borrow Admin Reference.")
+	let adminRef: &Admin.AdminProxy
+	prepare(account: AuthAccount){
+		self.adminRef = account.borrow<&Admin.AdminProxy>(from: Admin.AdminProxyStoragePath) ?? panic("Cannot borrow Admin Reference.")
+	}
+	execute{
+		let fusdRules=[
+		FindMarket.TenantRule(name:"FUSD", types:[Type<@FUSD.Vault>()], ruleType: "ft", allow: true),
+		FindMarket.TenantRule(name:"Dandy", types:[ Type<@Dandy.NFT>()], ruleType: "nft", allow: true)
+		]
 
-        let fusdDandy = FindMarket.TenantSaleItem(name:"FUSDDandy", cut: nil, rules:[
-            FindMarket.TenantRule(name:"FUSD", types:[Type<@FUSD.Vault>()], ruleType: "ft", allow: true),
-            FindMarket.TenantRule(name:"Dandy", types:[ Type<@Dandy.NFT>()], ruleType: "nft", allow: true)
-            ], 
-            status: "active"
-        )
+		let fusdDandy = FindMarket.TenantSaleItem(name:"FUSDDandy", cut: nil, rules:fusdRules, status: "active")
 
-        let flowDandy = FindMarket.TenantSaleItem(name:"FlowDandy", cut: nil, rules:[
-            FindMarket.TenantRule(name:"Flow", types:[Type<@FlowToken.Vault>()], ruleType: "ft", allow: true),
-            FindMarket.TenantRule(name:"Dandy", types:[ Type<@Dandy.NFT>()], ruleType: "nft", allow: true)
-            ], 
-            status: "active"
-        )
+		let flowRules=[
+		FindMarket.TenantRule(name:"Flow", types:[Type<@FlowToken.Vault>()], ruleType: "ft", allow: true),
+		FindMarket.TenantRule(name:"Dandy", types:[ Type<@Dandy.NFT>()], ruleType: "nft", allow: true)
+		] 
 
-        adminRef.setMarketOption(tenant: tenant, saleItem: fusdDandy)
-        adminRef.setMarketOption(tenant: tenant, saleItem: flowDandy)
+		let flowDandy = FindMarket.TenantSaleItem(name:"FlowDandy", cut: nil, rules:flowRules,	status: "active")
 
-    }
+		self.adminRef.setMarketOption(tenant: tenant, saleItem: fusdDandy)
+		self.adminRef.setMarketOption(tenant: tenant, saleItem: flowDandy)
+
+	}
 }

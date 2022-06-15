@@ -1,5 +1,6 @@
 
 transaction(name: String, items: [String]) {
+
 	prepare(account: AuthAccount) {
 
 		let path=/storage/FindCuratedCollections
